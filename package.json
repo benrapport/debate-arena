@@ -1,0 +1,24 @@
+{
+  "name": "debate-arena",
+  "version": "1.0.0",
+  "description": "An AI debate platform where Claude models clash with different rhetorical styles across controversial topics",
+  "author": "Anthropic",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/anthropics/debate-arena"
+  },
+  "type": "module",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "tournament": "node tournament.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
+    "express": "^4.21.0",
+    "js-yaml": "^4.1.1"
+  }
+}

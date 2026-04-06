@@ -1,0 +1,50 @@
+topics:
+  - id: democracy
+    title: "Is democracy the best form of government?"
+    pro: "Argue that democracy is the best form of government"
+    con: "Argue that democracy is NOT the best form of government"
+  
+  - id: free-will
+    title: "Is free will an illusion?"
+    pro: "Argue that free will IS an illusion — we are deterministic machines"
+    con: "Argue that free will is REAL and meaningful"
+  
+  - id: social-media
+    title: "Has social media been net positive for humanity?"
+    pro: "Argue that social media has been NET POSITIVE for humanity"
+    con: "Argue that social media has been NET NEGATIVE for humanity"
+  
+  - id: ai-regulation
+    title: "Should AI development be heavily regulated?"
+    pro: "Argue FOR heavy government regulation of AI development"
+    con: "Argue AGAINST heavy government regulation of AI development"
+  
+  - id: college
+    title: "Is college worth it anymore?"
+    pro: "Argue that college is STILL worth it and essential"
+    con: "Argue that college is NO LONGER worth it for most people"
+  
+  - id: capitalism
+    title: "Is capitalism the best economic system?"
+    pro: "Argue that capitalism is the best economic system we have"
+    con: "Argue that capitalism has fundamentally failed and we need an alternative"
+  
+  - id: mars
+    title: "Should humanity prioritize colonizing Mars?"
+    pro: "Argue that Mars colonization should be a top priority for humanity"
+    con: "Argue that Mars colonization is a waste of resources and a distraction"
+  
+  - id: privacy
+    title: "Is privacy dead — and should we accept it?"
+    pro: "Argue that privacy as we knew it is dead and we should embrace radical transparency"
+    con: "Argue that privacy is a fundamental right worth fighting for at all costs"
+  
+  - id: monogamy
+    title: "Is monogamy natural for humans?"
+    pro: "Argue that monogamy IS natural and optimal for humans"
+    con: "Argue that monogamy is a social construct that goes against human nature"
+  
+  - id: remote-work
+    title: "Is remote work better than office work?"
+    pro: "Argue that remote work is strictly better than office work"
+    con: "Argue that office/in-person work is better than remote work"

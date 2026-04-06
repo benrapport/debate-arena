@@ -1,0 +1,10 @@
+.env
+node_modules
+debates/
+reports/
+*.log
+.DS_Store
+dist/
+build/
+.vscode/
+.idea/

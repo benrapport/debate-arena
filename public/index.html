@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Debate Arena</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0a0a0f; color: #e0e0e0; min-height: 100vh; }
+
+    .header { text-align: center; padding: 20px 20px 12px; background: linear-gradient(135deg, #1a1a2e 0%, #0a0a1a 100%); border-bottom: 1px solid #222; position: sticky; top: 0; z-index: 100; }
+    .header h1 { font-size: 24px; font-weight: 800; background: linear-gradient(135deg, #ff6b6b, #ffd93d, #6bcb77, #4d96ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: -1px; }
+    .header-nav { margin-top: 10px; font-size: 12px; }
+    .header-nav a { color: #4d96ff; text-decoration: none; margin: 0 12px; }
+    .header-nav a:hover { text-decoration: underline; }
+
+    /* Setup Panel */
+    .setup { max-width: 800px; margin: 20px auto; padding: 0 20px; }
+    .setup-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+    .setup-card { background: #12121a; border: 1px solid #222; border-radius: 10px; padding: 14px; }
+    .setup-card h3 { font-size: 12px; color: #888; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; }
+    .setup-card label { display: block; font-size: 11px; color: #666; margin-bottom: 3px; margin-top: 8px; }
+    .setup-card select { width: 100%; background: #1a1a2a; border: 1px solid #333; color: #e0e0e0; padding: 7px 10px; border-radius: 8px; font-size: 13px; cursor: pointer; }
+    .setup-card select:focus { outline: none; border-color: #4d96ff; }
+    .topic-select { grid-column: 1 / -1; }
+    .topic-select select { font-size: 14px; padding: 10px; }
+
+    .start-btn { display: block; width: 100%; max-width: 800px; margin: 0 auto 24px; padding: 12px; background: linear-gradient(135deg, #4d96ff, #6b5ce7); color: white; border: none; border-radius: 10px; font-size: 15px; font-weight: 700; cursor: pointer; transition: transform 0.1s, opacity 0.2s; }
+    .start-btn:hover { transform: translateY(-1px); }
+    .start-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+    /* Sticky Score Strip */
+    .score-strip { position: sticky; top: 53px; z-index: 99; background: #0a0a0f; border-bottom: 1px solid #222; padding: 10px 20px; display: none; }
+    .score-strip-inner { max-width: 900px; margin: 0 auto; }
+    .score-row { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
+    .score-side { flex: 0 0 auto; min-width: 140px; }
+    .score-side.right { text-align: right; }
+    .score-label { font-size: 12px; font-weight: 700; }
+    .score-label.a { color: #ff6b6b; }
+    .score-label.b { color: #4d96ff; }
+
+    .diff-display { flex: 1; text-align: center; }
+    .diff-number { font-size: 28px; font-weight: 900; font-variant-numeric: tabular-nums; transition: color 0.3s; }
+    .diff-number.ahead-a { color: #ff6b6b; }
+    .diff-number.ahead-b { color: #4d96ff; }
+    .diff-number.tied { color: #ffd93d; }
+    .diff-sub { font-size: 10px; color: #555; margin-top: -2px; }
+
+    .tug-bar { height: 6px; background: #1a1a2a; border-radius: 3px; overflow: hidden; position: relative; }
+    .tug-fill-a { position: absolute; top: 0; left: 0; height: 100%; background: linear-gradient(90deg, #ff6b6b, #ff8e8e); transition: width 0.6s ease; border-radius: 3px; }
+    .tug-fill-b { position: absolute; top: 0; right: 0; height: 100%; background: linear-gradient(270deg, #4d96ff, #6bb5ff); transition: width 0.6s ease; border-radius: 3px; }
+
+    .round-pills { display: flex; gap: 6px; justify-content: center; margin-top: 8px; }
+    .round-pill { padding: 3px 10px; border-radius: 16px; font-size: 10px; font-weight: 600; background: #1a1a2a; border: 1px solid #222; color: #444; transition: all 0.3s; }
+    .round-pill.active { border-color: #ffd93d; color: #ffd93d; }
+    .round-pill.won-a { background: rgba(255,107,107,0.12); border-color: #ff6b6b; color: #ff6b6b; }
+    .round-pill.won-b { background: rgba(77,150,255,0.12); border-color: #4d96ff; color: #4d96ff; }
+
+    /* Chart */
+    .chart-wrap { max-width: 900px; margin: 0 auto 12px; padding: 0 20px; display: none; }
+    .chart-container { height: 100px; background: #12121a; border: 1px solid #222; border-radius: 10px; padding: 10px 14px; position: relative; }
+    .chart-container canvas { width: 100% !important; height: 100% !important; }
+
+    /* Judge */
+    .judge-wrap { max-width: 900px; margin: 0 auto 12px; padding: 0 20px; }
+    .judge-box { background: #12121a; border: 1px solid #333; border-radius: 10px; padding: 10px 14px; display: none; }
+    .judge-label { font-size: 10px; color: #ffd93d; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; font-weight: 700; }
+    .judge-text { font-size: 12px; color: #bbb; line-height: 1.5; font-style: italic; }
+
+    /* Arena */
+    .arena { max-width: 900px; margin: 0 auto; padding: 0 20px 40px; display: none; }
+    .arena-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    .debater-col { background: #12121a; border: 1px solid #222; border-radius: 10px; overflow: hidden; }
+    .debater-header { padding: 10px 14px; font-weight: 700; font-size: 13px; display: flex; align-items: center; gap: 6px; }
+    .debater-header.a { background: rgba(255,107,107,0.08); border-bottom: 2px solid #ff6b6b; }
+    .debater-header.b { background: rgba(77,150,255,0.08); border-bottom: 2px solid #4d96ff; }
+    .debater-model { font-size: 10px; color: #555; font-weight: 400; margin-left: auto; }
+
+    .debater-rounds { padding: 0; max-height: 600px; overflow-y: auto; }
+    .debater-rounds::-webkit-scrollbar { width: 4px; }
+    .debater-rounds::-webkit-scrollbar-track { background: transparent; }
+    .debater-rounds::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
+
+    .round-block { padding: 12px 14px; border-bottom: 1px solid #1a1a2a; }
+    .round-label { font-size: 9px; color: #555; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; font-weight: 600; }
+    .round-text { font-size: 12.5px; line-height: 1.55; color: #ccc; }
+    .round-text .cursor { display: inline-block; width: 2px; height: 13px; background: #ffd93d; animation: blink 0.8s infinite; vertical-align: text-bottom; margin-left: 2px; }
+    @keyframes blink { 0%, 50% { opacity: 1; } 51%, 100% { opacity: 0; } }
+
+    .round-score-badge { display: inline-block; margin-top: 6px; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 700; }
+    .round-score-badge.win { background: rgba(107, 203, 119, 0.15); color: #6bcb77; }
+    .round-score-badge.lose { background: rgba(255,107,107,0.08); color: #666; }
+
+    /* Final */
+    .final-result { text-align: center; padding: 20px; background: linear-gradient(135deg, #1a1a2e, #12121a); border: 1px solid #333; border-radius: 14px; margin-top: 16px; display: none; }
+    .final-result h2 { font-size: 14px; color: #666; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px; }
+    .final-result .winner-name { font-size: 28px; font-weight: 800; }
+    .final-result .final-score { font-size: 16px; color: #888; margin-top: 2px; }
+
+    .score-breakdown { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 14px; text-align: left; }
+    .breakdown-card { background: #0a0a14; border-radius: 8px; padding: 8px 12px; }
+    .breakdown-card h4 { font-size: 10px; color: #555; margin-bottom: 4px; text-transform: uppercase; }
+    .breakdown-row { display: flex; justify-content: space-between; font-size: 11px; }
+
+    /* Analysis section */
+    .analysis-wrap { max-width: 900px; margin: 0 auto 12px; padding: 0 20px; display: none; }
+    .analysis-box { background: #12121a; border: 1px solid #333; border-radius: 10px; padding: 14px; }
+    .analysis-label { font-size: 10px; color: #6bcb77; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; font-weight: 700; }
+    .analysis-section { margin-bottom: 12px; }
+    .analysis-section h3 { font-size: 11px; color: #ffd93d; text-transform: uppercase; margin-bottom: 6px; }
+    .analysis-text { font-size: 12px; color: #bbb; line-height: 1.5; }
+    .analysis-bullet { margin-left: 16px; margin-bottom: 4px; }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .arena-grid { grid-template-columns: 1fr; }
+      .setup-grid { grid-template-columns: 1fr; }
+      .setup-card { grid-column: auto; }
+      .topic-select { grid-column: auto; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <h1>DEBATE ARENA</h1>
+  <div class="header-nav">
+    <a href="/">New Debate</a> | <a href="/history.html">History</a>
+  </div>
+</div>
+
+<div class="setup" id="setup">
+  <div class="setup-grid">
+    <div class="setup-card topic-select">
+      <h3>Topic</h3>
+      <select id="topic"></select>
+    </div>
+    <div class="setup-card">
+      <h3>Debater A (Pro)</h3>
+      <label>Style</label>
+      <select id="styleA"></select>
+      <label>Model</label>
+      <select id="modelA">
+        <option value="claude-opus-4-20250514">Opus 4</option>
+        <option value="claude-sonnet-4-20250514" selected>Sonnet 4</option>
+        <option value="claude-haiku-4-5-20251001">Haiku 4.5</option>
+      </select>
+    </div>
+    <div class="setup-card">
+      <h3>Debater B (Con)</h3>
+      <label>Style</label>
+      <select id="styleB"></select>
+      <label>Model</label>
+      <select id="modelB">
+        <option value="claude-opus-4-20250514">Opus 4</option>
+        <option value="claude-sonnet-4-20250514">Sonnet 4</option>
+        <option value="claude-haiku-4-5-20251001" selected>Haiku 4.5</option>
+      </select>
+    </div>
+  </div>
+  <button class="start-btn" id="startBtn" onclick="startDebate()">START DEBATE</button>
+</div>
+
+<div class="score-strip" id="scoreStrip">
+  <div class="score-strip-inner">
+    <div class="score-row">
+      <div class="score-side"><span class="score-label a" id="nameA">—</span></div>
+      <div class="diff-display">
+        <div class="diff-number tied" id="diffDisplay">EVEN</div>
+        <div class="diff-sub" id="diffSub">0 — 0</div>
+      </div>
+      <div class="score-side right"><span class="score-label b" id="nameB">—</span></div>
+    </div>
+    <div class="tug-bar">
+      <div class="tug-fill-a" id="tugA" style="width:50%"></div>
+      <div class="tug-fill-b" id="tugB" style="width:50%"></div>
+    </div>
+    <div class="round-pills" id="roundPills"></div>
+  </div>
+</div>
+
+<div class="chart-wrap" id="chartWrap">
+  <div class="chart-container"><canvas id="scoreChart"></canvas></div>
+</div>
+
+<div class="judge-wrap">
+  <div class="judge-box" id="judgeBox">
+    <div class="judge-label">Judge</div>
+    <div class="judge-text" id="judgeText"></div>
+  </div>
+</div>
+
+<div class="analysis-wrap" id="analysisWrap">
+  <div class="analysis-box" id="analysisBox">
+    <div class="analysis-label">Post-Debate Analysis</div>
+    <div id="analysisContent"></div>
+  </div>
+</div>
+
+<div class="arena" id="arena">
+  <div class="arena-grid">
+    <div class="debater-col">
+      <div class="debater-header a"><span id="headerA">Debater A</span><span class="debater-model" id="modelLabelA"></span></div>
+      <div class="debater-rounds" id="roundsA"></div>
+    </div>
+    <div class="debater-col">
+      <div class="debater-header b"><span id="headerB">Debater B</span><span class="debater-model" id="modelLabelB"></span></div>
+      <div class="debater-rounds" id="roundsB"></div>
+    </div>
+  </div>
+  <div class="final-result" id="finalResult">
+    <h2>Winner</h2>
+    <div class="winner-name" id="winnerName"></div>
+    <div class="final-score" id="finalScore"></div>
+    <div class="score-breakdown" id="scoreBreakdown"></div>
+  </div>
+</div>
+
+<script>
+const ROUND_NAMES = ["Opening", "Rebuttal", "Cross-Exam", "Closing"];
+let chartData = { diff: [0] };
+let cumulativeA = 0, cumulativeB = 0;
+let canvas, ctx;
+let userScrolled = { a: false, b: false };
+
+async function init() {
+  const [topics, styles] = await Promise.all([
+    fetch("/api/topics").then(r => r.json()),
+    fetch("/api/styles").then(r => r.json()),
+  ]);
+
+  const topicSel = document.getElementById("topic");
+  topics.forEach(t => {
+    const o = document.createElement("option");
+    o.value = t.id; o.textContent = t.title;
+    topicSel.appendChild(o);
+  });
+
+  ["styleA", "styleB"].forEach((id, i) => {
+    const sel = document.getElementById(id);
+    const keys = Object.keys(styles);
+    keys.forEach((k, j) => {
+      const o = document.createElement("option");
+      o.value = k; o.textContent = `${styles[k].emoji} ${styles[k].name}`;
+      if (i === 0 && j === 0) o.selected = true;
+      if (i === 1 && j === 3) o.selected = true;
+      sel.appendChild(o);
+    });
+  });
+}
+
+function drawChart() {
+  if (!canvas) {
+    canvas = document.getElementById("scoreChart");
+    ctx = canvas.getContext("2d");
+  }
+  const w = canvas.parentElement.clientWidth - 28;
+  const h = canvas.parentElement.clientHeight - 20;
+  canvas.width = w * 2; canvas.height = h * 2;
+  canvas.style.width = w + "px"; canvas.style.height = h + "px";
+  ctx.scale(2, 2);
+  ctx.clearRect(0, 0, w, h);
+
+  const diffs = chartData.diff;
+  const maxAbs = Math.max(...diffs.map(Math.abs), 10);
+  const points = diffs.length;
+  const xStep = points > 1 ? w / (points - 1) : w;
+  const midY = h / 2;
+
+  // Zero line
+  ctx.strokeStyle = "#333"; ctx.lineWidth = 1; ctx.setLineDash([4, 4]);
+  ctx.beginPath(); ctx.moveTo(0, midY); ctx.lineTo(w, midY); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // A zone label
+  ctx.font = "9px -apple-system"; ctx.fillStyle = "#ff6b6b33"; ctx.textAlign = "left";
+  ctx.fillText("A leads", 4, 12);
+  ctx.fillStyle = "#4d96ff33"; ctx.textAlign = "left";
+  ctx.fillText("B leads", 4, h - 4);
+
+  // Diff line with gradient
+  if (points > 1) {
+    ctx.lineWidth = 2.5;
+    for (let i = 1; i < points; i++) {
+      const x0 = (i - 1) * xStep, y0 = midY - (diffs[i - 1] / maxAbs) * (midY - 8);
+      const x1 = i * xStep, y1 = midY - (diffs[i] / maxAbs) * (midY - 8);
+      ctx.strokeStyle = diffs[i] > 0 ? "#ff6b6b" : diffs[i] < 0 ? "#4d96ff" : "#ffd93d";
+      ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke();
+    }
+  }
+
+  // Dots
+  diffs.forEach((v, i) => {
+    const x = i * xStep, y = midY - (v / maxAbs) * (midY - 8);
+    ctx.fillStyle = v > 0 ? "#ff6b6b" : v < 0 ? "#4d96ff" : "#ffd93d";
+    ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI * 2); ctx.fill();
+    // Diff label on dot
+    if (i > 0) {
+      ctx.font = "bold 10px -apple-system"; ctx.textAlign = "center";
+      ctx.fillText(v > 0 ? `+${v}` : v === 0 ? "0" : `${v}`, x, y - 10);
+    }
+  });
+
+  // Round labels
+  ctx.font = "9px -apple-system"; ctx.fillStyle = "#444"; ctx.textAlign = "center";
+  ["Start", ...ROUND_NAMES.slice(0, points - 1)].forEach((label, i) => {
+    ctx.fillText(label, i * xStep, h);
+  });
+}
+
+function updateDiff() {
+  const diff = cumulativeA - cumulativeB;
+  const el = document.getElementById("diffDisplay");
+  const sub = document.getElementById("diffSub");
+
+  if (diff > 0) {
+    el.textContent = `+${diff} A`;
+    el.className = "diff-number ahead-a";
+  } else if (diff < 0) {
+    el.textContent = `+${Math.abs(diff)} B`;
+    el.className = "diff-number ahead-b";
+  } else {
+    el.textContent = "EVEN";
+    el.className = "diff-number tied";
+  }
+  sub.textContent = `${cumulativeA} — ${cumulativeB}`;
+
+  const total = cumulativeA + cumulativeB || 1;
+  document.getElementById("tugA").style.width = ((cumulativeA / total) * 100) + "%";
+  document.getElementById("tugB").style.width = ((cumulativeB / total) * 100) + "%";
+}
+
+function startDebate() {
+  const topic = document.getElementById("topic").value;
+  const styleA = document.getElementById("styleA").value;
+  const styleB = document.getElementById("styleB").value;
+  const modelA = document.getElementById("modelA").value;
+  const modelB = document.getElementById("modelB").value;
+
+  document.getElementById("startBtn").disabled = true;
+  document.getElementById("scoreStrip").style.display = "block";
+  document.getElementById("chartWrap").style.display = "block";
+  document.getElementById("arena").style.display = "block";
+  document.getElementById("analysisWrap").style.display = "none";
+  document.getElementById("roundsA").innerHTML = "";
+  document.getElementById("roundsB").innerHTML = "";
+  document.getElementById("finalResult").style.display = "none";
+  document.getElementById("judgeBox").style.display = "none";
+  userScrolled = { a: false, b: false };
+
+  chartData = { diff: [0] };
+  cumulativeA = 0; cumulativeB = 0;
+  updateDiff();
+
+  const pills = document.getElementById("roundPills");
+  pills.innerHTML = ROUND_NAMES.map((n, i) => `<span class="round-pill" id="pill-${i}">${n}</span>`).join("");
+
+  // Detect user scroll per column
+  const roundsA = document.getElementById("roundsA");
+  const roundsB = document.getElementById("roundsB");
+  roundsA.addEventListener("scroll", () => { userScrolled.a = true; });
+  roundsB.addEventListener("scroll", () => { userScrolled.b = true; });
+
+  // Close any existing EventSource before starting new debate
+  if (window._activeES) { window._activeES.close(); window._activeES = null; }
+
+  const url = `/api/debate/stream?topic=${topic}&styleA=${styleA}&styleB=${styleB}&modelA=${modelA}&modelB=${modelB}`;
+  const es = new EventSource(url);
+  window._activeES = es;
+
+  // Token batching with requestAnimationFrame
+  let tokenBuf = { A: "", B: "" }, tokenRAF = null;
+
+  let currentRoundBlockA = null, currentRoundBlockB = null;
+  let roundScoresA = [], roundScoresB = [];
+
+  es.addEventListener("config", (e) => {
+    const d = JSON.parse(e.data);
+    document.getElementById("nameA").textContent = `${d.debaterA.emoji} ${d.debaterA.name}`;
+    document.getElementById("nameB").textContent = `${d.debaterB.emoji} ${d.debaterB.name}`;
+    document.getElementById("headerA").textContent = `${d.debaterA.emoji} ${d.debaterA.name}`;
+    document.getElementById("headerB").textContent = `${d.debaterB.emoji} ${d.debaterB.name}`;
+    document.getElementById("modelLabelA").textContent = d.debaterA.model.replace("claude-", "").split("-202")[0];
+    document.getElementById("modelLabelB").textContent = d.debaterB.model.replace("claude-", "").split("-202")[0];
+    drawChart();
+  });
+
+  es.addEventListener("round_start", (e) => {
+    const d = JSON.parse(e.data);
+    const pill = document.getElementById(`pill-${d.round}`);
+    if (pill) pill.classList.add("active");
+    currentRoundBlockA = addRoundBlock("roundsA", d.name);
+    currentRoundBlockB = addRoundBlock("roundsB", d.name);
+  });
+
+  es.addEventListener("debater_token", (e) => {
+    const d = JSON.parse(e.data);
+    tokenBuf[d.debater] += d.token;
+    if (!tokenRAF) {
+      tokenRAF = requestAnimationFrame(() => {
+        ["A", "B"].forEach(side => {
+          if (tokenBuf[side]) {
+            const bl = side === "A" ? currentRoundBlockA : currentRoundBlockB;
+            if (bl) {
+              const te = bl.querySelector(".round-text");
+              const cur = te.querySelector(".cursor");
+              if (cur) cur.remove();
+              te.insertAdjacentText("beforeend", tokenBuf[side]);
+              te.insertAdjacentHTML("beforeend", '<span class="cursor"></span>');
+              const cont = bl.closest(".debater-rounds");
+              if (!userScrolled[side === "A" ? "a" : "b"]) cont.scrollTop = cont.scrollHeight;
+            }
+            tokenBuf[side] = "";
+          }
+        });
+        tokenRAF = null;
+      });
+    }
+  });
+
+  es.addEventListener("debater_done", (e) => {
+    const d = JSON.parse(e.data);
+    const block = d.debater === "A" ? currentRoundBlockA : currentRoundBlockB;
+    if (block) {
+      const cursor = block.querySelector(".cursor");
+      if (cursor) cursor.remove();
+    }
+  });
+
+  es.addEventListener("judge_scores", (e) => {
+    const d = JSON.parse(e.data);
+    const aTotal = d.debater_a_scores.argument + d.debater_a_scores.rhetoric + d.debater_a_scores.rebuttal + d.debater_a_scores.impact;
+    const bTotal = d.debater_b_scores.argument + d.debater_b_scores.rhetoric + d.debater_b_scores.rebuttal + d.debater_b_scores.impact;
+
+    cumulativeA += aTotal; cumulativeB += bTotal;
+    roundScoresA.push(d.debater_a_scores);
+    roundScoresB.push(d.debater_b_scores);
+
+    updateDiff();
+
+    chartData.diff.push(cumulativeA - cumulativeB);
+    drawChart();
+
+    const pill = document.getElementById(`pill-${d.round}`);
+    if (pill) {
+      pill.classList.remove("active");
+      pill.classList.add(d.round_winner === "A" ? "won-a" : "won-b");
+    }
+
+    if (currentRoundBlockA) {
+      const badge = document.createElement("div");
+      badge.className = `round-score-badge ${d.round_winner === "A" ? "win" : "lose"}`;
+      badge.textContent = d.round_winner === "A" ? `+${aTotal - bTotal} WIN` : `${aTotal - bTotal}`;
+      currentRoundBlockA.appendChild(badge);
+    }
+    if (currentRoundBlockB) {
+      const badge = document.createElement("div");
+      badge.className = `round-score-badge ${d.round_winner === "B" ? "win" : "lose"}`;
+      badge.textContent = d.round_winner === "B" ? `+${bTotal - aTotal} WIN` : `${bTotal - aTotal}`;
+      currentRoundBlockB.appendChild(badge);
+    }
+
+    const judgeBox = document.getElementById("judgeBox");
+    judgeBox.style.display = "block";
+    document.getElementById("judgeText").textContent = d.commentary;
+  });
+
+  es.addEventListener("analysis", (e) => {
+    const analysis = JSON.parse(e.data);
+    displayAnalysis(analysis);
+  });
+
+  es.addEventListener("debate_complete", () => {
+    es.close();
+    document.getElementById("startBtn").disabled = false;
+
+    const final = document.getElementById("finalResult");
+    final.style.display = "block";
+
+    const diff = cumulativeA - cumulativeB;
+    const winner = diff > 0 ? "A" : "B";
+    const wName = winner === "A" ? document.getElementById("nameA").textContent : document.getElementById("nameB").textContent;
+    document.getElementById("winnerName").textContent = wName;
+    document.getElementById("winnerName").style.color = winner === "A" ? "#ff6b6b" : "#4d96ff";
+    document.getElementById("finalScore").textContent = `${cumulativeA} — ${cumulativeB}  (${diff > 0 ? "+" : ""}${diff})`;
+
+    const bd = document.getElementById("scoreBreakdown");
+    const categories = ["argument", "rhetoric", "rebuttal", "impact"];
+    const labels = ["Argument", "Rhetoric", "Rebuttal", "Impact"];
+    bd.innerHTML = categories.map((cat, i) => {
+      const aSum = roundScoresA.reduce((s, r) => s + r[cat], 0);
+      const bSum = roundScoresB.reduce((s, r) => s + r[cat], 0);
+      const d = aSum - bSum;
+      return `<div class="breakdown-card"><h4>${labels[i]}</h4>\n        <div class="breakdown-row"><span style="color:${d > 0 ? '#ff6b6b' : d < 0 ? '#4d96ff' : '#888'}\">${d > 0 ? '+' + d + ' A' : d < 0 ? '+' + Math.abs(d) + ' B' : 'Tied'}</span><span style="color:#444">${aSum} v ${bSum}</span></div></div>`;
+    }).join("");
+
+    final.scrollIntoView({ behavior: "smooth" });
+  });
+
+  es.addEventListener("error", () => {
+    es.close();
+    document.getElementById("startBtn").disabled = false;
+  });
+}
+
+function displayAnalysis(analysis) {
+  const wrap = document.getElementById("analysisWrap");
+  const content = document.getElementById("analysisContent");
+  
+  let html = "";
+  
+  if (analysis.error || analysis.raw_text) {
+    // Fallback: show raw analysis text
+    html = `<div class="analysis-section"><div class="analysis-text">${(analysis.raw_text || analysis.error || "Analysis unavailable").replace(/\n/g, "<br>")}</div></div>`;
+  } else {
+    // Turning points
+    if (analysis.turning_points && analysis.turning_points.length > 0) {
+      html += `<div class="analysis-section"><h3>Turning Points</h3>`;
+      analysis.turning_points.forEach(tp => {
+        html += `<div class="analysis-bullet"><strong>Round ${tp.round}:</strong> ${tp.description}</div>`;
+      });
+      html += `</div>`;
+    }
+    
+    // Strongest moments
+    if (analysis.strongest_moments) {
+      html += `<div class="analysis-section"><h3>Strongest Moments</h3>`;
+      if (analysis.strongest_moments.debater_a) {
+        html += `<div class="analysis-bullet"><strong>A:</strong> ${analysis.strongest_moments.debater_a.explanation}</div>`;
+      }
+      if (analysis.strongest_moments.debater_b) {
+        html += `<div class="analysis-bullet"><strong>B:</strong> ${analysis.strongest_moments.debater_b.explanation}</div>`;
+      }
+      html += `</div>`;
+    }
+    
+    // Verdict
+    if (analysis.verdict) {
+      html += `<div class="analysis-section"><h3>Verdict</h3>`;
+      html += `<div class="analysis-bullet"><strong>Winner:</strong> ${analysis.verdict.winner}</div>`;
+      html += `<div class="analysis-bullet"><strong>Decisive Factor:</strong> ${analysis.verdict.decisive_factor}</div>`;
+      if (analysis.verdict.if_rematch) {
+        html += `<div class="analysis-bullet"><strong>If Rematch:</strong> ${analysis.verdict.if_rematch}</div>`;
+      }
+      html += `</div>`;
+    }
+  }
+  
+  content.innerHTML = html;
+  wrap.style.display = "block";
+}
+
+function addRoundBlock(containerId, roundName) {
+  const container = document.getElementById(containerId);
+  const block = document.createElement("div");
+  block.className = "round-block";
+  block.innerHTML = `<div class="round-label">${roundName}</div><div class="round-text"></div>`;
+  container.appendChild(block);
+  return block;
+}
+
+init();
+</script>
+</body>
+</html>

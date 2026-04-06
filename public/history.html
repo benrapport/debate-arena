@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Debate History - Arena</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0a0a0f; color: #e0e0e0; min-height: 100vh; }
+
+    .header { text-align: center; padding: 20px 20px 12px; background: linear-gradient(135deg, #1a1a2e 0%, #0a0a1a 100%); border-bottom: 1px solid #222; position: sticky; top: 0; z-index: 100; }
+    .header h1 { font-size: 24px; font-weight: 800; background: linear-gradient(135deg, #ff6b6b, #ffd93d, #6bcb77, #4d96ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: -1px; }
+    .header-nav { margin-top: 10px; font-size: 12px; }
+    .header-nav a { color: #4d96ff; text-decoration: none; margin: 0 12px; }
+    .header-nav a:hover { text-decoration: underline; }
+
+    .container { max-width: 1000px; margin: 0 auto; padding: 20px; }
+
+    .page-title { font-size: 20px; font-weight: 700; margin-bottom: 20px; color: #ffd93d; }
+
+    .debates-list { display: grid; gap: 12px; }
+    .debate-item { background: #12121a; border: 1px solid #222; border-radius: 10px; padding: 14px; cursor: pointer; transition: all 0.2s; }
+    .debate-item:hover { border-color: #333; background: #1a1a22; }
+
+    .debate-header { display: grid; grid-template-columns: 1fr 1fr 1fr 100px; gap: 12px; align-items: center; margin-bottom: 10px; }
+    .debate-date { font-size: 12px; color: #666; }
+    .debate-topic { font-size: 13px; font-weight: 600; }
+    .debate-models { font-size: 11px; color: #777; }
+    .debate-result { text-align: right; font-weight: 700; font-size: 12px; }
+    .debate-result.win-a { color: #ff6b6b; }
+    .debate-result.win-b { color: #4d96ff; }
+
+    .debate-meta { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; font-size: 11px; color: #666; }
+    .meta-item { display: flex; justify-content: space-between; }
+    .meta-label { color: #555; }
+    .meta-value { color: #888; font-weight: 600; }
+
+    .debate-expanded { background: #0a0a14; border: 1px solid #333; border-radius: 8px; margin-top: 12px; padding: 14px; max-height: 500px; overflow-y: auto; }
+
+    .transcript-section { margin-bottom: 16px; }
+    .transcript-round { margin-bottom: 12px; }
+    .round-title { font-size: 11px; color: #ffd93d; text-transform: uppercase; font-weight: 700; margin-bottom: 6px; }
+    .round-score { font-size: 10px; color: #666; margin-top: 3px; }
+    .debater-text { font-size: 12px; line-height: 1.5; color: #bbb; margin: 4px 0; }
+    .debater-a { color: #ff8e8e; }
+    .debater-b { color: #6bb5ff; }
+
+    .analysis-section { margin-top: 12px; padding: 10px; background: #1a1a24; border-radius: 6px; }
+    .analysis-title { font-size: 11px; color: #6bcb77; font-weight: 700; text-transform: uppercase; margin-bottom: 6px; }
+    .analysis-text { font-size: 11px; color: #999; line-height: 1.4; }
+
+    .empty-state { text-align: center; padding: 60px 20px; color: #555; }
+    .empty-state-icon { font-size: 48px; margin-bottom: 12px; }
+    .empty-state a { color: #4d96ff; text-decoration: none; font-weight: 600; }
+    .empty-state a:hover { text-decoration: underline; }
+
+    .debate-expanded::-webkit-scrollbar { width: 6px; }
+    .debate-expanded::-webkit-scrollbar-track { background: transparent; }
+    .debate-expanded::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+
+    .close-btn { position: absolute; top: 10px; right: 10px; background: none; border: none; color: #666; cursor: pointer; font-size: 18px; }
+    .close-btn:hover { color: #aaa; }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <h1>DEBATE ARENA</h1>
+  <div class="header-nav">
+    <a href="/">New Debate</a> | <a href="/history.html">History</a>
+  </div>
+</div>
+
+<div class="container">
+  <div class="page-title">Debate History</div>
+  
+  <div id="debatesList" class="debates-list">
+    <div class="empty-state">
+      <div class="empty-state-icon">📚</div>
+      <div>Loading debates...</div>
+    </div>
+  </div>
+</div>
+
+<script>
+let expandedId = null;
+
+function formatDate(isoString) {
+  const date = new Date(isoString);
+  const now = new Date();
+  const diffMs = now - date;
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+
+  if (diffMins < 1) return "Just now";
+  if (diffMins < 60) return `${diffMins}m ago`;
+  if (diffHours < 24) return `${diffHours}h ago`;
+  if (diffDays < 7) return `${diffDays}d ago`;
+
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+async function loadDebates() {
+  try {
+    const res = await fetch('/api/debates');
+    const debates = await res.json();
+
+    const list = document.getElementById('debatesList');
+    if (debates.length === 0) {
+      list.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📚</div><div>No debates yet.<br><a href="/">Start one!</a></div></div>';
+      return;
+    }
+    
+    list.innerHTML = debates.map(d => `
+      <div class="debate-item" onclick="toggleDebate(event, '${d.id}')">
+        <div class="debate-header">
+          <div>
+            <div class="debate-date">${formatDate(d.createdAt)}</div>
+            <div class="debate-topic">${d.topic}</div>
+          </div>
+          <div class="debate-models">
+            ${d.debaterA.model.replace('claude-', '').split('-202')[0]} vs ${d.debaterB.model.replace('claude-', '').split('-202')[0]}
+          </div>
+          <div class="debate-models">
+            ${d.debaterA.style} vs ${d.debaterB.style}
+          </div>
+          <div class="debate-result ${d.winner === 'A' ? 'win-a' : 'win-b'}">
+            ${d.totalA} — ${d.totalB}
+            <br><small>${d.winner === 'A' ? '+' + d.diff : '+' + Math.abs(d.diff)}</small>
+          </div>
+        </div>
+        
+        <div class="debate-meta">
+          <div class="meta-item"><span class="meta-label">Debater A</span><span class="meta-value">${d.debaterA.style}</span></div>
+          <div class="meta-item"><span class="meta-label">Debater B</span><span class="meta-value">${d.debaterB.style}</span></div>
+          <div class="meta-item"><span class="meta-label">Rounds</span><span class="meta-value">${d.roundCount}</span></div>
+          <div class="meta-item"><span class="meta-label">Winner</span><span class="meta-value">${d.winner === 'A' ? 'Debater A' : 'Debater B'}</span></div>
+        </div>
+
+        <div id="expanded-${d.id}" class="debate-expanded" style="display: none;">
+          <button class="close-btn" onclick="toggleDebate(event, '${d.id}')">✕</button>
+          <div id="content-${d.id}" style="padding-top: 10px;"></div>
+        </div>
+      </div>
+    `).join('');
+  } catch (err) {
+    console.error('Failed to load debates:', err);
+    document.getElementById('debatesList').innerHTML = '<div class="empty-state">Error loading debates</div>';
+  }
+}
+
+async function toggleDebate(e, id) {
+  e.stopPropagation();
+  
+  const expanded = document.getElementById(`expanded-${id}`);
+  if (expanded.style.display === 'block') {
+    expanded.style.display = 'none';
+    expandedId = null;
+    return;
+  }
+  
+  // Close previously expanded
+  if (expandedId && expandedId !== id) {
+    document.getElementById(`expanded-${expandedId}`).style.display = 'none';
+  }
+  
+  expandedId = id;
+  expanded.style.display = 'block';
+  
+  // Load full debate data
+  if (!expanded.dataset.loaded) {
+    const content = document.getElementById(`content-${id}`);
+    content.innerHTML = '<div style="color: #666; font-size: 12px;">Loading...</div>';
+    
+    try {
+      const res = await fetch(`/api/debates/${id}`);
+      const debate = await res.json();
+      
+      let html = '';
+      
+      // Transcript by round
+      if (debate.rounds && debate.rounds.length > 0) {
+        html += '<div class="transcript-section">';
+        for (let i = 0; i < debate.rounds.length; i++) {
+          const round = debate.rounds[i];
+          const ta = debate.transcript.find(t => t.round === i && t.debater === 'A');
+          const tb = debate.transcript.find(t => t.round === i && t.debater === 'B');
+          
+          html += `
+            <div class="transcript-round">
+              <div class="round-title">${round.name}</div>
+              ${ta ? `<div class="debater-text debater-a"><strong>A:</strong> ${ta.text.substring(0, 150)}...</div>` : ''}
+              ${tb ? `<div class="debater-text debater-b"><strong>B:</strong> ${tb.text.substring(0, 150)}...</div>` : ''}
+              <div class="round-score">A: ${round.debater_a_total} | B: ${round.debater_b_total} | Winner: ${round.round_winner === 'A' ? 'A' : 'B'}</div>
+            </div>
+          `;
+        }
+        html += '</div>';
+      }
+      
+      // Analysis
+      if (debate.analysis && debate.analysis.verdict) {
+        html += `
+          <div class="analysis-section">
+            <div class="analysis-title">Analysis</div>
+            <div class="analysis-text">
+              <strong>Verdict:</strong> ${debate.analysis.verdict.winner}<br>
+              <strong>Decisive Factor:</strong> ${debate.analysis.verdict.decisive_factor}
+            </div>
+          </div>
+        `;
+      }
+      
+      content.innerHTML = html;
+      expanded.dataset.loaded = 'true';
+    } catch (err) {
+      console.error('Failed to load debate:', err);
+      content.innerHTML = '<div style="color: #f00; font-size: 12px;">Error loading debate details</div>';
+    }
+  }
+}
+
+loadDebates();
+</script>
+
+</body>
+</html>
