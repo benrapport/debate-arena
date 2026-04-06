@@ -1,0 +1,15 @@
+# Tournament: Style Showdown — Every style vs every style
+name: "Style Showdown"
+description: "All 6 debater styles compete on the same model to find the dominant strategy"
+
+judge:
+  model: claude-sonnet-4-20250514
+  randomize_presentation: true
+
+topics:
+  - social-media
+  - free-will
+
+# "all" means run every style pair
+style: all
+model: claude-sonnet-4-20250514

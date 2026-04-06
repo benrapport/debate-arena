@@ -141,22 +141,14 @@
       <label>Style</label>
       <select id="styleA"></select>
       <label>Model</label>
-      <select id="modelA">
-        <option value="claude-opus-4-20250514">Opus 4</option>
-        <option value="claude-sonnet-4-20250514" selected>Sonnet 4</option>
-        <option value="claude-haiku-4-5-20251001">Haiku 4.5</option>
-      </select>
+      <select id="modelA"></select>
     </div>
     <div class="setup-card">
       <h3>Debater B (Con)</h3>
       <label>Style</label>
       <select id="styleB"></select>
       <label>Model</label>
-      <select id="modelB">
-        <option value="claude-opus-4-20250514">Opus 4</option>
-        <option value="claude-sonnet-4-20250514">Sonnet 4</option>
-        <option value="claude-haiku-4-5-20251001" selected>Haiku 4.5</option>
-      </select>
+      <select id="modelB"></select>
     </div>
   </div>
   <button class="start-btn" id="startBtn" onclick="startDebate()">START DEBATE</button>
@@ -225,9 +217,10 @@ let canvas, ctx;
 let userScrolled = { a: false, b: false };
 
 async function init() {
-  const [topics, styles] = await Promise.all([
+  const [topics, styles, models] = await Promise.all([
     fetch("/api/topics").then(r => r.json()),
     fetch("/api/styles").then(r => r.json()),
+    fetch("/api/models").then(r => r.json()),
   ]);
 
   const topicSel = document.getElementById("topic");
@@ -245,6 +238,20 @@ async function init() {
       o.value = k; o.textContent = `${styles[k].emoji} ${styles[k].name}`;
       if (i === 0 && j === 0) o.selected = true;
       if (i === 1 && j === 3) o.selected = true;
+      sel.appendChild(o);
+    });
+  });
+
+  // Populate model dropdowns dynamically from API
+  ["modelA", "modelB"].forEach((id, i) => {
+    const sel = document.getElementById(id);
+    models.forEach((m, j) => {
+      const o = document.createElement("option");
+      o.value = m.id;
+      o.textContent = `${m.short} (${m.provider})`;
+      // Default: first model for A, second-to-last for B
+      if (i === 0 && j === 1) o.selected = true;
+      if (i === 1 && j === models.length - 1) o.selected = true;
       sel.appendChild(o);
     });
   });

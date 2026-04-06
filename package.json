@@ -1,12 +1,12 @@
 {
   "name": "debate-arena",
   "version": "1.0.0",
-  "description": "An AI debate platform where Claude models clash with different rhetorical styles across controversial topics",
-  "author": "Anthropic",
+  "description": "AI debate platform — pit LLMs against each other with structured judging. Anthropic Claude vs OpenAI GPT, 6 debate styles, real-time streaming.",
+  "author": "Ben Rapport",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/anthropics/debate-arena"
+    "url": "https://github.com/benrapport/debate-arena"
   },
   "type": "module",
   "engines": {
@@ -14,11 +14,14 @@
   },
   "scripts": {
     "start": "node server.js",
-    "tournament": "node tournament.js"
+    "tournament": "node tournament.js",
+    "tournament:cross": "node tournament.js config/tournaments/anthropic-vs-openai.yaml",
+    "tournament:styles": "node tournament.js config/tournaments/style-showdown.yaml"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
     "express": "^4.21.0",
-    "js-yaml": "^4.1.1"
+    "js-yaml": "^4.1.1",
+    "openai": "^6.33.0"
   }
 }

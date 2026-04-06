@@ -1,3 +1,5 @@
+import { providerCreate } from "../providers/index.js";
+
 export async function scoreRound(client, config) {
   const {
     topic,
@@ -25,14 +27,12 @@ export async function scoreRound(client, config) {
 
   let rawResponse = "";
   try {
-    const response = await client.messages.create({
+    rawResponse = await providerCreate({
       model: judgeModel,
-      max_tokens: 1000,
-      system: judgePrompt,
+      systemPrompt: judgePrompt,
       messages: [{ role: "user", content: judgeMessage }],
+      maxTokens: 1000,
     });
-
-    rawResponse = response.content[0].text;
   } catch (err) {
     throw new Error(`Judge API error: ${err.message}`);
   }

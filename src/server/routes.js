@@ -2,6 +2,7 @@ import { TOPICS, DEBATER_STYLES, MODELS } from "../config/content.js";
 import { runDebate } from "../debate/engine.js";
 import { createSSECallbacks } from "./sse-adapter.js";
 import { listDebates, loadDebate } from "../storage/debates.js";
+import { getAvailableModels, getAvailableProviders } from "../providers/index.js";
 
 const VERSION = "1.0.0";
 
@@ -126,6 +127,11 @@ export function setupRoutes(app, client) {
   });
 
   app.get("/api/models", (req, res) => {
-    res.json(MODELS);
+    // Return all models that have valid API keys
+    res.json(getAvailableModels());
+  });
+
+  app.get("/api/providers", (req, res) => {
+    res.json(getAvailableProviders());
   });
 }

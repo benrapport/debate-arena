@@ -1,0 +1,39 @@
+# Tournament: Anthropic vs OpenAI — Best models head to head
+name: "Anthropic vs OpenAI"
+description: "Best Claude models against best GPT models across multiple topics and styles"
+
+# Judge configuration
+judge:
+  model: claude-sonnet-4-20250514  # neutral-ish judge
+  randomize_presentation: true
+
+# Topics to test across (each matchup runs on each topic)
+topics:
+  - ai-regulation
+  - free-will
+  - capitalism
+
+# Style to use (same for both sides to isolate model quality)
+style: analytical
+
+# Matchups to run
+matchups:
+  - name: "Opus 4 vs GPT-4o"
+    a: { model: claude-opus-4-20250514, label: "Opus 4" }
+    b: { model: gpt-4o, label: "GPT-4o" }
+
+  - name: "Sonnet 4 vs GPT-4o"
+    a: { model: claude-sonnet-4-20250514, label: "Sonnet 4" }
+    b: { model: gpt-4o, label: "GPT-4o" }
+
+  - name: "Sonnet 4 vs o3-mini"
+    a: { model: claude-sonnet-4-20250514, label: "Sonnet 4" }
+    b: { model: o3-mini, label: "o3-mini" }
+
+  - name: "Haiku 4.5 vs GPT-4o-mini"
+    a: { model: claude-haiku-4-5-20251001, label: "Haiku 4.5" }
+    b: { model: gpt-4o-mini, label: "GPT-4o-mini" }
+
+  - name: "Opus 4 vs o3-mini"
+    a: { model: claude-opus-4-20250514, label: "Opus 4" }
+    b: { model: o3-mini, label: "o3-mini" }

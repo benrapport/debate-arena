@@ -1,4 +1,4 @@
-import { Anthropic } from "@anthropic-ai/sdk";
+import { providerStream } from "../providers/index.js";
 
 export async function getDebaterResponse(client, config) {
   const {
@@ -24,26 +24,15 @@ export async function getDebaterResponse(client, config) {
     { role: "user", content: userPrompt },
   ];
 
-  let fullText = "";
-
   try {
-    const stream = await client.messages.stream({
+    return await providerStream({
       model,
-      max_tokens: 400,
-      system: systemPrompt,
+      systemPrompt,
       messages,
+      maxTokens: 400,
+      onToken,
     });
-
-    for await (const event of stream) {
-      if (event.type === "content_block_delta" && event.delta.type === "text_delta") {
-        const token = event.delta.text;
-        fullText += token;
-        if (onToken) onToken(token);
-      }
-    }
   } catch (err) {
     throw new Error(`Debater API error (${model}): ${err.message}`);
   }
-
-  return fullText;
 }
